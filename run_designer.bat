@@ -1,4 +1,5 @@
 @echo off
+chcp 932 >nul
 title Tobiuo Wing Designer
 cd /d "%~dp0"
 
