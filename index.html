@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TobiuoMaker - トビウオ天秤＆各種オモリ用 グライダー翼 自動設計＆風洞シミュレータ</title>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --bg-panel: #131d2e;
+            --bg-card: #1e293b;
+            --border-color: #334155;
+            --accent-cyan: #38bdf8;
+            --accent-blue: #3b82f6;
+            --accent-mint: #34d399;
+            --accent-orange: #fb923c;
+            --accent-red: #f87171;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* ヘッダー */
+        header {
+            background: linear-gradient(90deg, #131d2e, #090d16);
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-badge {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            font-size: 0.72rem;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+
+        .header-links a {
+            color: var(--text-sub);
+            text-decoration: none;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.2s;
+        }
+        .header-links a:hover {
+            color: var(--accent-cyan);
+        }
+
+        /* メインレイアウト */
+        .main-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 53px);
+            position: relative;
+        }
+
+        /* 左サイドバー */
+        .sidebar {
+            width: 390px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 5;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .btn-preset {
+            background: rgba(9, 13, 22, 0.6);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .btn-preset:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(56, 189, 248, 0.15);
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            color: var(--text-sub);
+            margin-bottom: 3px;
+        }
+
+        .form-label span.val {
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        select, input[type="number"] {
+            width: 100%;
+            background: #090d16;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 6px 9px;
+            border-radius: 5px;
+            font-size: 0.82rem;
+            outline: none;
+        }
+
+        select:focus, input[type="number"]:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent-cyan);
+            cursor: pointer;
+        }
+
+        .quick-tags {
+            display: flex;
+            gap: 4px;
+            margin-top: 3px;
+            flex-wrap: wrap;
+        }
+
+        .tag-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: var(--text-sub);
+            font-size: 0.68rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .tag-btn:hover {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+
+        /* アクションボタン */
+        .btn-action-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: auto;
+            padding-top: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 7px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.15);
+            transform: translateY(-1px);
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        /* 3D風洞ビューアー */
+        .viewer-container {
+            flex: 1;
+            position: relative;
+            background: #060911;
+            overflow: hidden;
+        }
+
+        #webgl-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* 視点切替操作バー */
+        .view-controls {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            display: flex;
+            gap: 6px;
+            background: rgba(19, 29, 46, 0.88);
+            backdrop-filter: blur(8px);
+            padding: 5px 9px;
+            border-radius: 7px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            z-index: 5;
+        }
+
+        .view-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 5px 9px;
+            font-size: 0.75rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        .view-btn.active {
+            background: var(--accent-cyan);
+            color: #000;
+            font-weight: 700;
+            border-color: var(--accent-cyan);
+        }
+
+        /* 右上 HUD 計器盤 */
+        .hud-panel {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 300px;
+            background: rgba(19, 29, 46, 0.88);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 9px;
+            padding: 12px;
+            z-index: 5;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .hud-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hud-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .hud-item {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 5px;
+            padding: 6px 8px;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .hud-item.highlight {
+            border-left-color: var(--accent-mint);
+        }
+
+        .hud-label {
+            font-size: 0.68rem;
+            color: var(--text-sub);
+        }
+
+        .hud-val {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .hud-val span {
+            font-size: 0.72rem;
+            font-weight: 400;
+            color: var(--text-sub);
+            margin-left: 2px;
+        }
+
+        .stall-warning {
+            display: none;
+            background: rgba(239, 68, 68, 0.25);
+            border: 1px solid var(--accent-red);
+            color: #fca5a5;
+            padding: 7px;
+            border-radius: 5px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+            animation: pulse 1.5s infinite;
+            margin-top: 6px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .wind-status {
+            position: absolute;
+            bottom: 14px;
+            left: 14px;
+            background: rgba(19, 29, 46, 0.85);
+            backdrop-filter: blur(8px);
+            padding: 7px 12px;
+            border-radius: 7px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.78rem;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 5;
+        }
+
+        .wind-indicator {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--accent-mint);
+            box-shadow: 0 0 8px var(--accent-mint);
+        }
+
+        details {
+            background: rgba(9, 13, 22, 0.4);
+            border-radius: 6px;
+            padding: 6px 10px;
+            border: 1px solid var(--border-color);
+        }
+        details summary {
+            font-size: 0.78rem;
+            cursor: pointer;
+            color: var(--text-sub);
+            font-weight: 600;
+        }
+        details[open] summary {
+            margin-bottom: 6px;
+            color: var(--accent-cyan);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-left">
+            <h1 class="header-title">TobiuoMaker</h1>
+            <span class="header-badge">トビウオ天秤＆各種オモリ用 グライダー翼 自動設計システム v3.0</span>
+        </div>
+        <div class="header-links">
+            <a href="https://github.com/wak-shogo/TobiuoMaker" target="_blank">
+                <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                </svg>
+                GitHub
+            </a>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- パラメータ入力サイドバー -->
+        <div class="sidebar">
+            <!-- プリセット -->
+            <div class="card">
+                <div class="card-title">⚡ クイックプリセット</div>
+                <div class="preset-buttons">
+                    <button class="btn-preset" onclick="applyPreset('king15')">
+                        <strong>15号 キング天秤</strong><br>
+                        <span style="color:var(--text-sub)">60g (トビウオ仕様)</span>
+                    </button>
+                    <button class="btn-preset" onclick="applyPreset('bullet14')">
+                        <strong>1/2oz バレット</strong><br>
+                        <span style="color:var(--text-sub)">14g (バス・ロック)</span>
+                    </button>
+                    <button class="btn-preset" onclick="applyPreset('bullet28')">
+                        <strong>1oz バレット</strong><br>
+                        <span style="color:var(--text-sub)">28g (磯ロック・遠投)</span>
+                    </button>
+                    <button class="btn-preset" onclick="applyPreset('drop10')">
+                        <strong>10号 ナス型オモリ</strong><br>
+                        <span style="color:var(--text-sub)">37.5g (胴突・堤防)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- オモリ仕様 -->
+            <div class="card">
+                <div class="card-title">⚓ オモリ仕様</div>
+                <div class="form-group">
+                    <label class="form-label">オモリの種類</label>
+                    <select id="sinker_type" onchange="onParamChange(true)">
+                        <option value="bullet">バレットシンカー (砲弾型・前後抜け止め)</option>
+                        <option value="king_tenbin">キング天秤 (流線型＋アームスロット)</option>
+                        <option value="drop">ナス型 / 胴突オモリ (涙型＋環逃げ溝)</option>
+                        <option value="cylinder">六角 / 円筒オモリ</option>
+                        <option value="custom">カスタム形状</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-label">
+                        <span>重量</span>
+                        <span class="val" id="val_weight">14.0 g</span>
+                    </div>
+                    <input type="range" id="weight_g" min="3.5" max="120" step="0.5" value="14" oninput="onParamChange(true)">
+                    <div class="quick-tags">
+                        <button class="tag-btn" onclick="setWeight(7)">1/4oz</button>
+                        <button class="tag-btn" onclick="setWeight(14)">1/2oz</button>
+                        <button class="tag-btn" onclick="setWeight(21)">3/4oz</button>
+                        <button class="tag-btn" onclick="setWeight(28)">1oz</button>
+                        <button class="tag-btn" onclick="setWeight(37.5)">10号</button>
+                        <button class="tag-btn" onclick="setWeight(56.25)">15号</button>
+                        <button class="tag-btn" onclick="setWeight(75)">20号</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-label">
+                        <span>オモリ最大直径</span>
+                        <span class="val" id="val_dia">10.0 mm</span>
+                    </div>
+                    <input type="range" id="diameter_mm" min="5" max="30" step="0.5" value="10" oninput="onParamChange(false)">
+                </div>
+
+                <div class="form-group">
+                    <div class="form-label">
+                        <span>オモリ全長</span>
+                        <span class="val" id="val_len">22.0 mm</span>
+                    </div>
+                    <input type="range" id="length_mm" min="10" max="80" step="1" value="22" oninput="onParamChange(true)">
+                </div>
+            </div>
+
+            <!-- 自動伸縮テール＆尾翼連動設定 -->
+            <div class="card" style="border-left: 3px solid var(--accent-mint);">
+                <div class="card-title" style="color:var(--accent-mint);">
+                    <span>🚀 自動伸縮テール ＆ 尾翼連動設計</span>
+                </div>
+                <div class="form-group">
+                    <div class="form-label">
+                        <span>テールブーム長 (モーメントアーム)</span>
+                        <span class="val" id="val_tail_len" style="color:var(--accent-mint);">自動計算中</span>
+                    </div>
+                    <input type="range" id="tail_length_mm" min="20" max="130" step="1" value="50" oninput="onParamChange(false)">
+                    <div style="font-size:0.7rem; color:var(--text-sub); margin-top:3px;">
+                        ※ テール長を伸ばすと尾翼は小型・低抵抗化し、短くすると尾翼が自動拡大して安定を維持します。
+                    </div>
+                </div>
+            </div>
+
+            <!-- 空力＆迎角設定 -->
+            <div class="card">
+                <div class="card-title">🪂 空力＆迎角設定</div>
+                <div class="form-group">
+                    <div class="form-label">
+                        <span>主翼迎角 (Angle of Attack)</span>
+                        <span class="val" id="val_aoa">3.0 °</span>
+                    </div>
+                    <input type="range" id="angle_of_attack_deg" min="0" max="18" step="0.5" value="3.0" oninput="onParamChange(false)">
+                    <div style="font-size:0.7rem; color:var(--text-sub); margin-top:2px;">
+                        ※ 2.5°〜4.5° で最大滑空比（トビウオ天秤の実績角）。13°以上で失速。
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-label">
+                        <span>想定飛行速度 (風速)</span>
+                        <span class="val" id="val_speed">18.0 m/s</span>
+                    </div>
+                    <input type="range" id="flight_speed_ms" min="5" max="35" step="1" value="18" oninput="onParamChange(false)">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">滑空環境モード</label>
+                    <select id="glide_mode" onchange="onParamChange(false)">
+                        <option value="air">空中キャスト滑空 (飛距離向上・滞空時間UP)</option>
+                        <option value="water">水中滑空 (表層スキッピング・スローフォール)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 詳細マニュアル調整 -->
+            <details>
+                <summary>🔧 主翼寸法の詳細マニュアル上書き</summary>
+                <div style="padding-top: 6px; display: flex; flex-direction: column; gap: 6px;">
+                    <div class="form-group">
+                        <div class="form-label">
+                            <span>主翼スパン (全幅 mm)</span>
+                            <span class="val" id="val_span">自動</span>
+                        </div>
+                        <input type="number" id="custom_span" placeholder="自動計算 (空欄)" onchange="onParamChange(false)">
+                    </div>
+                    <div class="form-group">
+                        <div class="form-label">
+                            <span>主翼平均コード長 (mm)</span>
+                            <span class="val" id="val_chord">自動</span>
+                        </div>
+                        <input type="number" id="custom_chord" placeholder="自動計算 (空欄)" onchange="onParamChange(false)">
+                    </div>
+                </div>
+            </details>
+
+            <div class="btn-action-group">
+                <button class="btn-primary" onclick="autoOptimize()">
+                    <span>✨ 最適パラメータに自動リセット</span>
+                </button>
+                <button class="btn-primary btn-download" onclick="downloadSTL()">
+                    <span>💾 STLファイルをダウンロード (3D印刷用)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 3D風洞ビューアー -->
+        <div class="viewer-container">
+            <canvas id="webgl-canvas"></canvas>
+
+            <!-- 視点切替操作バー -->
+            <div class="view-controls">
+                <button class="view-btn active" id="btn_side" onclick="resetCamera('side')">👀 横から見る (側面)</button>
+                <button class="view-btn" id="btn_iso" onclick="resetCamera('iso')">斜め横 (立体)</button>
+                <button class="view-btn" id="btn_top" onclick="resetCamera('top')">上面 (平面)</button>
+                <button class="view-btn" id="btn_front" onclick="resetCamera('front')">正面</button>
+                <button class="view-btn active" id="btn_smoke" onclick="toggleSmoke()">💨 風洞スモーク</button>
+                <button class="view-btn active" id="btn_sinker" onclick="toggleSinker()">⚓ オモリ</button>
+                <button class="view-btn" id="btn_pressure" onclick="togglePressure()">🌈 表面圧力マップ</button>
+                <button class="view-btn" id="btn_wire" onclick="toggleWireframe()">🕸 ワイヤー</button>
+            </div>
+
+            <!-- HUD 計器盤 -->
+            <div class="hud-panel">
+                <div class="hud-title">
+                    <span>AERODYNAMIC HUD</span>
+                    <span id="hud_mode_tag" style="font-size:0.7rem; color:var(--text-sub);">AIR MODE</span>
+                </div>
+
+                <div class="hud-grid">
+                    <div class="hud-item highlight">
+                        <div class="hud-label">揚力 (Lift)</div>
+                        <div class="hud-val" id="hud_lift">-- <span>g</span></div>
+                    </div>
+                    <div class="hud-item">
+                        <div class="hud-label">抗力 (Drag)</div>
+                        <div class="hud-val" id="hud_drag">-- <span>g</span></div>
+                    </div>
+                    <div class="hud-item highlight">
+                        <div class="hud-label">揚抗比 (L/D)</div>
+                        <div class="hud-val" id="hud_ld">--</div>
+                    </div>
+                    <div class="hud-item">
+                        <div class="hud-label">滑空角 (Glide Angle)</div>
+                        <div class="hud-val" id="hud_angle">-- <span>°</span></div>
+                    </div>
+                </div>
+
+                <!-- 尾翼寸法連動HUD -->
+                <div class="hud-grid">
+                    <div class="hud-item" style="border-left-color: var(--accent-mint);">
+                        <div class="hud-label">水平尾翼 (幅 × 弦)</div>
+                        <div class="hud-val" style="font-size:0.88rem;" id="hud_horiz">-- <span>mm</span></div>
+                    </div>
+                    <div class="hud-item" style="border-left-color: var(--accent-cyan);">
+                        <div class="hud-label">垂直尾翼 (高 × 弦)</div>
+                        <div class="hud-val" style="font-size:0.88rem;" id="hud_vert">-- <span>mm</span></div>
+                    </div>
+                </div>
+
+                <!-- 静的安定性 HUD -->
+                <div style="background:rgba(30,41,59,0.7); border-radius:6px; padding:7px; font-size:0.75rem; margin-bottom:6px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                        <span style="color:var(--text-sub);">静的縦安定性 (Static Margin)</span>
+                        <strong style="color:var(--accent-mint);" id="hud_sm">-- %</strong>
+                    </div>
+                    <div style="color:var(--text-sub); font-size:0.7rem;" id="hud_sm_desc">計算中...</div>
+                </div>
+
+                <!-- 推定飛距離 -->
+                <div style="background:rgba(30,41,59,0.7); border-radius:6px; padding:7px; font-size:0.75rem;">
+                    <div style="color:var(--text-sub); font-size:0.68rem; margin-bottom:1px;">推定キャスト飛距離</div>
+                    <div style="font-size:1.1rem; font-weight:700; color:var(--accent-cyan);" id="hud_dist">-- <span>m</span></div>
+                </div>
+
+                <div class="stall-warning" id="stall_warn">
+                    ⚠️ STALL WARNING: 迎角過大！流線剥離により揚力低下＆抗力増大中
+                </div>
+            </div>
+
+            <div class="wind-status">
+                <div class="wind-indicator" id="wind_led"></div>
+                <div>風洞実験中: 水平気流 <strong id="wind_speed_text" style="color:#fff;">18 m/s</strong> (機首正面から後方へ)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ライブラリ読み込み -->
+    <script src="js/three.min.js"></script>
+    <script src="js/OrbitControls.js"></script>
+    <script src="js/aero_optimizer.js"></script>
+    <script src="js/mesh_generator.js"></script>
+
+    <script>
+        let scene, camera, renderer, controls;
+        let wingMesh = null;
+        let sinkerMesh = null;
+        let windTunnelGroup = null;
+        let smokeParticles = [];
+        let numParticles = 450;
+        let isStalled = false;
+        let showSmoke = true;
+        let showSinker = true;
+        let showPressure = false;
+        let showWire = false;
+
+        let currentGliderData = null;
+        let currentMeshResult = null;
+
+        const PRESETS = {
+            king15: { type: "king_tenbin", weight: 60.0, dia: 14.0, len: 35.0, aoa: 3.0 },
+            bullet14: { type: "bullet", weight: 14.0, dia: 10.0, len: 22.0, aoa: 3.0 },
+            bullet28: { type: "bullet", weight: 28.0, dia: 13.0, len: 28.0, aoa: 3.5 },
+            drop10: { type: "drop", weight: 37.5, dia: 16.0, len: 32.0, aoa: 3.0 }
+        };
+
+        function initThree() {
+            const container = document.querySelector('.viewer-container');
+            const canvas = document.getElementById('webgl-canvas');
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x060911);
+            scene.fog = new THREE.FogExp2(0x060911, 0.002);
+
+            camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 1000);
+            
+            // 初期視点: 真横から見る (左が機首、右が尾翼、上が垂直尾翼)
+            camera.position.set(130, 4, 15);
+
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.target.set(0, 0, 15); // 機体中心に注視点
+
+            // 照明
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+            scene.add(ambientLight);
+
+            const dirLight1 = new THREE.DirectionalLight(0x38bdf8, 0.85);
+            dirLight1.position.set(60, 90, 50);
+            scene.add(dirLight1);
+
+            const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.45);
+            dirLight2.position.set(-60, -40, -50);
+            scene.add(dirLight2);
+
+            setupWindTunnel();
+            setupSmokeStreamlines();
+
+            window.addEventListener('resize', onWindowResize);
+            animate();
+        }
+
+        function setupWindTunnel() {
+            windTunnelGroup = new THREE.Group();
+
+            // 水平床グリッド (XZ平面, Y = -22mm)
+            const grid = new THREE.GridHelper(240, 24, 0x0284c7, 0x1e293b);
+            grid.position.set(0, -22, 20);
+            windTunnelGroup.add(grid);
+
+            // 風洞トンネルフレーム (横長水平ケージ: X幅150, Y高65, Z長240)
+            const boxGeo = new THREE.BoxGeometry(150, 65, 240);
+            const boxEdges = new THREE.EdgesGeometry(boxGeo);
+            const boxMat = new THREE.LineBasicMaterial({ color: 0x1e3a5f, transparent: true, opacity: 0.35 });
+            const boxLine = new THREE.LineSegments(boxEdges, boxMat);
+            boxLine.position.set(0, 5, 20);
+            windTunnelGroup.add(boxLine);
+
+            scene.add(windTunnelGroup);
+        }
+
+        function setupSmokeStreamlines() {
+            const pGeo = new THREE.BufferGeometry();
+            const positions = new Float32Array(numParticles * 3);
+            const colors = new Float32Array(numParticles * 3);
+
+            smokeParticles = [];
+            for (let i = 0; i < numParticles; i++) {
+                const x0 = (Math.random() - 0.5) * 90;
+                const y0 = (Math.random() - 0.5) * 32 + 2;
+                const z0 = -95 + Math.random() * 25; // 前方から流入
+
+                positions[i * 3] = x0;
+                positions[i * 3 + 1] = y0;
+                positions[i * 3 + 2] = z0;
+
+                colors[i * 3] = 0.2;
+                colors[i * 3 + 1] = 0.8;
+                colors[i * 3 + 2] = 1.0;
+
+                smokeParticles.push({
+                    x: x0, y: y0, z: z0,
+                    origX: x0, origY: y0,
+                    speed: 1.0 + Math.random() * 0.4,
+                    turbulence: Math.random() * 10
+                });
+            }
+
+            pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            pGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const pMat = new THREE.PointsMaterial({
+                size: 2.2,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+
+            const pSystem = new THREE.Points(pGeo, pMat);
+            pSystem.name = "smokeSystem";
+            scene.add(pSystem);
+        }
+
+        function updateSmoke(dt) {
+            const pSystem = scene.getObjectByName("smokeSystem");
+            if (!pSystem || !showSmoke) {
+                if (pSystem) pSystem.visible = showSmoke;
+                return;
+            }
+            pSystem.visible = true;
+
+            const posAttr = pSystem.geometry.attributes.position;
+            const colAttr = pSystem.geometry.attributes.color;
+            const speedSlider = parseFloat(document.getElementById('flight_speed_ms').value);
+            const baseV = speedSlider * 3.6;
+            const aoa = parseFloat(document.getElementById('angle_of_attack_deg').value);
+            const tailLen = currentGliderData ? currentGliderData.tail_length_mm : 50;
+
+            for (let i = 0; i < numParticles; i++) {
+                const p = smokeParticles[i];
+                p.z += baseV * p.speed * dt;
+
+                // 主翼周辺 (Z = -15 〜 +30)
+                if (p.z > -18 && p.z < 35 && Math.abs(p.x) < 48) {
+                    if (p.origY >= 0) {
+                        p.y = p.origY + 2.5 * Math.sin((p.z + 18) / 40 * Math.PI);
+                        if (isStalled) {
+                            p.y += Math.sin(p.z * 0.45 + p.turbulence) * 6.0;
+                            p.x += Math.cos(p.z * 0.35 + p.turbulence) * 4.0;
+                        } else {
+                            if (p.z > 8) {
+                                p.y -= (aoa * 0.35) * ((p.z - 8) / 28);
+                            }
+                        }
+                    } else {
+                        p.y = p.origY - 1.8 * Math.sin((p.z + 18) / 40 * Math.PI);
+                    }
+                }
+
+                // 水平尾翼周辺 (Z = tailLen - 15 〜 tailLen + 10)
+                if (p.z > tailLen - 12 && p.z < tailLen + 8 && Math.abs(p.x) < 22) {
+                    // 水平尾翼による気流の整流
+                    p.y = (p.y * 0.7) + (p.origY * 0.3);
+                }
+
+                // 翼端渦
+                if (Math.abs(p.x) > 28 && Math.abs(p.x) < 48 && p.z > 14) {
+                    const sign = Math.sign(p.x);
+                    const theta = (p.z - 14) * 0.32;
+                    p.x = p.origX + sign * Math.sin(theta) * 2.0;
+                    p.y += Math.cos(theta) * 2.0;
+                }
+
+                if (p.z > 130) {
+                    p.z = -95 - Math.random() * 20;
+                    p.x = p.origX;
+                    p.y = p.origY;
+                }
+
+                posAttr.setXYZ(i, p.x, p.y, p.z);
+
+                if (isStalled && p.z > 0 && Math.abs(p.x) < 42) {
+                    colAttr.setXYZ(i, 1.0, 0.3, 0.15); // 失速赤橙
+                } else {
+                    const speedRatio = THREE.MathUtils.clamp((p.speed - 1.0) / 0.4, 0, 1);
+                    colAttr.setXYZ(i, 0.1, 0.75 + speedRatio * 0.25, 1.0);
+                }
+            }
+
+            posAttr.needsUpdate = true;
+            colAttr.needsUpdate = true;
+        }
+
+        let lastTime = performance.now();
+        function animate() {
+            requestAnimationFrame(animate);
+            const now = performance.now();
+            const dt = (now - lastTime) / 1000.0;
+            lastTime = now;
+
+            controls.update();
+            updateSmoke(dt);
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            const container = document.querySelector('.viewer-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function resetCamera(view) {
+            document.querySelectorAll('.view-controls .view-btn').forEach(btn => {
+                if (btn.id && ['btn_side', 'btn_iso', 'btn_top', 'btn_front'].includes(btn.id)) {
+                    btn.classList.toggle('active', btn.id === 'btn_' + view);
+                }
+            });
+
+            const centerZ = currentGliderData ? (currentGliderData.tail_length_mm * 0.4) : 15;
+
+            if (view === 'side') {
+                camera.position.set(135, 4, centerZ);
+                controls.target.set(0, 0, centerZ);
+            } else if (view === 'iso') {
+                camera.position.set(85, 25, centerZ + 25);
+                controls.target.set(0, 0, centerZ);
+            } else if (view === 'top') {
+                camera.position.set(0, 140, centerZ);
+                controls.target.set(0, 0, centerZ);
+            } else if (view === 'front') {
+                camera.position.set(0, 4, -120);
+                controls.target.set(0, 0, centerZ);
+            }
+            controls.update();
+        }
+
+        function toggleSmoke() {
+            showSmoke = !showSmoke;
+            document.getElementById('btn_smoke').classList.toggle('active', showSmoke);
+        }
+
+        function toggleSinker() {
+            showSinker = !showSinker;
+            document.getElementById('btn_sinker').classList.toggle('active', showSinker);
+            if (sinkerMesh) sinkerMesh.visible = showSinker;
+        }
+
+        function togglePressure() {
+            showPressure = !showPressure;
+            document.getElementById('btn_pressure').classList.toggle('active', showPressure);
+            if (wingMesh) {
+                wingMesh.material.vertexColors = showPressure;
+                wingMesh.material.color = showPressure ? new THREE.Color(0xffffff) : new THREE.Color(0x38bdf8);
+                wingMesh.material.needsUpdate = true;
+            }
+        }
+
+        function toggleWireframe() {
+            showWire = !showWire;
+            document.getElementById('btn_wire').classList.toggle('active', showWire);
+            if (wingMesh) wingMesh.material.wireframe = showWire;
+        }
+
+        function applyPreset(name) {
+            const p = PRESETS[name];
+            if (!p) return;
+            document.getElementById('sinker_type').value = p.type;
+            document.getElementById('weight_g').value = p.weight;
+            document.getElementById('diameter_mm').value = p.dia;
+            document.getElementById('length_mm').value = p.len;
+            document.getElementById('angle_of_attack_deg').value = p.aoa;
+            
+            document.getElementById('custom_span').value = '';
+            document.getElementById('custom_chord').value = '';
+
+            // テール長スライダーも最適値に自動リセット
+            onParamChange(true);
+        }
+
+        function setWeight(w) {
+            document.getElementById('weight_g').value = w;
+            onParamChange(true);
+        }
+
+        function getFormData() {
+            return {
+                sinker_type: document.getElementById('sinker_type').value,
+                weight_g: parseFloat(document.getElementById('weight_g').value),
+                diameter_mm: parseFloat(document.getElementById('diameter_mm').value),
+                length_mm: parseFloat(document.getElementById('length_mm').value),
+                angle_of_attack_deg: parseFloat(document.getElementById('angle_of_attack_deg').value),
+                flight_speed_ms: parseFloat(document.getElementById('flight_speed_ms').value),
+                glide_mode: document.getElementById('glide_mode').value,
+                tail_length_mm: parseFloat(document.getElementById('tail_length_mm').value) || null,
+                span_mm: parseFloat(document.getElementById('custom_span').value) || null,
+                mean_chord_mm: parseFloat(document.getElementById('custom_chord').value) || null
+            };
+        }
+
+        // autoUpdateTail: true の場合、テール長スライダーの値を最適長に自動更新する
+        function onParamChange(autoUpdateTail) {
+            const formData = getFormData();
+
+            // 1. 純粋なクライアントサイドで即座に最適化計算を実行！
+            const aero = AeroOptimizer.calculateOptimalGlider(formData);
+
+            if (autoUpdateTail) {
+                document.getElementById('tail_length_mm').value = aero.tail_length_mm;
+                formData.tail_length_mm = aero.tail_length_mm;
+            }
+
+            // UIテキスト更新
+            document.getElementById('val_weight').innerText = `${formData.weight_g.toFixed(1)} g`;
+            document.getElementById('val_dia').innerText = `${formData.diameter_mm.toFixed(1)} mm`;
+            document.getElementById('val_len').innerText = `${formData.length_mm.toFixed(1)} mm`;
+            document.getElementById('val_aoa').innerText = `${formData.angle_of_attack_deg.toFixed(1)} °`;
+            document.getElementById('val_speed').innerText = `${formData.flight_speed_ms.toFixed(1)} m/s`;
+            document.getElementById('wind_speed_text').innerText = `${formData.flight_speed_ms.toFixed(0)} m/s`;
+            document.getElementById('val_tail_len').innerText = `${aero.tail_length_mm.toFixed(1)} mm`;
+
+            currentGliderData = aero;
+
+            // 2. 3Dメッシュを純粋なクライアントサイドで即座に再生成！
+            const meshRes = MeshGenerator.buildFullGliderMesh(aero);
+            const sinkerRes = MeshGenerator.buildSinkerDummyMesh(aero);
+            currentMeshResult = meshRes;
+
+            updateScene3D(meshRes, sinkerRes);
+            updateHUD(aero);
+        }
+
+        function autoOptimize() {
+            document.getElementById('custom_span').value = '';
+            document.getElementById('custom_chord').value = '';
+            onParamChange(true);
+        }
+
+        function updateScene3D(meshRes, sinkerRes) {
+            if (wingMesh) {
+                scene.remove(wingMesh);
+                wingMesh.geometry.dispose();
+                wingMesh.material.dispose();
+            }
+
+            const wingGeo = new THREE.BufferGeometry();
+            wingGeo.setAttribute('position', new THREE.BufferAttribute(meshRes.vertices, 3));
+            wingGeo.setAttribute('normal', new THREE.BufferAttribute(meshRes.normals, 3));
+            wingGeo.setAttribute('color', new THREE.BufferAttribute(meshRes.colors, 3));
+
+            const wingMat = new THREE.MeshStandardMaterial({
+                color: showPressure ? 0xffffff : 0x38bdf8,
+                vertexColors: showPressure,
+                roughness: 0.35,
+                metalness: 0.15,
+                side: THREE.DoubleSide,
+                wireframe: showWire
+            });
+
+            wingMesh = new THREE.Mesh(wingGeo, wingMat);
+            scene.add(wingMesh);
+
+            if (sinkerMesh) {
+                scene.remove(sinkerMesh);
+                sinkerMesh.geometry.dispose();
+                sinkerMesh.material.dispose();
+            }
+
+            const sinkerGeo = new THREE.BufferGeometry();
+            sinkerGeo.setAttribute('position', new THREE.BufferAttribute(sinkerRes.vertices, 3));
+            sinkerGeo.setAttribute('normal', new THREE.BufferAttribute(sinkerRes.normals, 3));
+
+            const sinkerMat = new THREE.MeshStandardMaterial({
+                color: 0x94a3b8,
+                roughness: 0.25,
+                metalness: 0.8,
+                transparent: true,
+                opacity: 0.75
+            });
+
+            sinkerMesh = new THREE.Mesh(sinkerGeo, sinkerMat);
+            sinkerMesh.visible = showSinker;
+            scene.add(sinkerMesh);
+        }
+
+        function updateHUD(aero) {
+            isStalled = aero.is_stalled;
+
+            document.getElementById('hud_lift').innerHTML = `${aero.lift_g.toFixed(1)} <span>g</span>`;
+            document.getElementById('hud_drag').innerHTML = `${aero.drag_g.toFixed(1)} <span>g</span>`;
+            document.getElementById('hud_ld').innerText = aero.lift_drag_ratio.toFixed(2);
+            document.getElementById('hud_angle').innerHTML = `${aero.glide_angle_deg.toFixed(1)} <span>°</span>`;
+            
+            document.getElementById('hud_horiz').innerHTML = `${aero.horiz_span_mm.toFixed(0)} × ${aero.horiz_chord_mm.toFixed(0)} <span>mm</span>`;
+            document.getElementById('hud_vert').innerHTML = `${aero.fin_height_mm.toFixed(0)} × ${aero.fin_chord_mm.toFixed(0)} <span>mm</span>`;
+            
+            document.getElementById('hud_sm').innerText = `${aero.static_margin_pct.toFixed(1)} %`;
+            document.getElementById('hud_sm_desc').innerText = aero.stability_description;
+
+            document.getElementById('hud_dist').innerHTML = `${aero.estimated_distance_m.toFixed(1)} <span>m</span>`;
+            document.getElementById('hud_mode_tag').innerText = aero.glide_mode.toUpperCase() + " MODE";
+
+            const stallWarn = document.getElementById('stall_warn');
+            const windLed = document.getElementById('wind_led');
+            if (isStalled) {
+                stallWarn.style.display = 'block';
+                windLed.style.background = 'var(--accent-red)';
+                windLed.style.boxShadow = '0 0 10px var(--accent-red)';
+            } else {
+                stallWarn.style.display = 'none';
+                windLed.style.background = 'var(--accent-mint)';
+                windLed.style.boxShadow = '0 0 8px var(--accent-mint)';
+            }
+        }
+
+        // 純粋なクライアントサイドで直接バイナリSTLをダウンロード
+        function downloadSTL() {
+            if (!currentMeshResult || !currentGliderData) return;
+
+            const header = `Tobiuo_${currentGliderData.sinker_type}_${currentGliderData.weight_g}g`;
+            const blob = MeshGenerator.exportSTLBinary(currentMeshResult.triangles, header);
+
+            const filename = `TobiuoWing_${currentGliderData.sinker_type}_${Math.round(currentGliderData.weight_g)}g_Tail${Math.round(currentGliderData.tail_length_mm)}mm.stl`;
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initThree();
+            // 初期状態: 14g バレットシンカー
+            onParamChange(true);
+        });
+    </script>
+</body>
+</html>
