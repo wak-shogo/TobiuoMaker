@@ -262,7 +262,6 @@ def build_full_glider_mesh(params: dict) -> np.ndarray:
 
 def export_stl_binary(triangles: np.ndarray, file_path: str, header_text: str = "TobiuoMakerGlider") -> int:
     n_tri = len(triangles)
-    # STL標準座標系に変換 (X:スパン, Y:前後, Z:高さ)
     v0 = triangles[:, 0, [0, 2, 1]]
     v1 = triangles[:, 1, [0, 2, 1]]
     v2 = triangles[:, 2, [0, 2, 1]]
@@ -290,3 +289,6 @@ def export_stl_binary(triangles: np.ndarray, file_path: str, header_text: str = 
         records['attr'] = 0
         records.tofile(f)
     return n_tri
+
+# 旧バージョン互換性エイリアス
+build_glider_mesh = build_full_glider_mesh

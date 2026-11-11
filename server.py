@@ -17,16 +17,26 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional
 
-from aero_optimizer import calculate_optimal_wing
-from mesh_generator import build_glider_mesh, export_stl_binary, get_mesh_data
+from aero_optimizer import calculate_optimal_glider
+from mesh_generator import build_full_glider_mesh, export_stl_binary
 
-app = FastAPI(title="Tobiuo Wing Designer & Wind Tunnel Simulator")
+app = FastAPI(title="TobiuoMaker & Wing Designer")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = os.path.join(BASE_DIR, "static")
-TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+# index.html の探索 (カレントディレクトリ または templates/)
+if os.path.exists(os.path.join(BASE_DIR, "index.html")):
+    HTML_PATH = os.path.join(BASE_DIR, "index.html")
+elif os.path.exists(os.path.join(BASE_DIR, "templates", "index.html")):
+    HTML_PATH = os.path.join(BASE_DIR, "templates", "index.html")
+else:
+    HTML_PATH = os.path.join(BASE_DIR, "index.html")
+
+# 静的ファイルの探索
+if os.path.exists(os.path.join(BASE_DIR, "js")):
+    app.mount("/js", StaticFiles(directory=os.path.join(BASE_DIR, "js")), name="js")
+if os.path.exists(os.path.join(BASE_DIR, "static")):
+    app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
 
 class DesignParams(BaseModel):
@@ -37,90 +47,47 @@ class DesignParams(BaseModel):
     angle_of_attack_deg: float = 3.0
     glide_mode: str = "air"
     flight_speed_ms: float = 18.0
+    tail_length_mm: Optional[float] = None
     span_mm: Optional[float] = None
     mean_chord_mm: Optional[float] = None
-    fin_height_mm: Optional[float] = None
 
 
 @app.get("/", response_class=HTMLResponse)
 async def index():
-    html_path = os.path.join(TEMPLATES_DIR, "index.html")
-    with open(html_path, "r", encoding="utf-8") as f:
+    with open(HTML_PATH, "r", encoding="utf-8") as f:
         content = f.read()
     return HTMLResponse(content=content)
 
 
 @app.post("/api/optimize")
 async def api_optimize(params: DesignParams):
-    res = calculate_optimal_wing(
-        sinker_type=params.sinker_type,
-        weight_g=params.weight_g,
-        diameter_mm=params.diameter_mm,
-        length_mm=params.length_mm,
-        angle_of_attack_deg=params.angle_of_attack_deg,
-        glide_mode=params.glide_mode,
-        custom_span_mm=params.span_mm,
-        custom_chord_mm=params.mean_chord_mm,
-        custom_fin_height_mm=params.fin_height_mm,
-        flight_speed_ms=params.flight_speed_ms
-    )
+    res = calculate_optimal_glider(params.model_dump())
     return JSONResponse(content=res)
-
-
-@app.post("/api/mesh")
-async def api_mesh(params: dict):
-    opt = calculate_optimal_wing(
-        sinker_type=params.get("sinker_type", "bullet"),
-        weight_g=float(params.get("weight_g", 14.0)),
-        diameter_mm=float(params.get("diameter_mm", 10.0)),
-        length_mm=float(params.get("length_mm", 22.0)),
-        angle_of_attack_deg=float(params.get("angle_of_attack_deg", 3.0)),
-        glide_mode=params.get("glide_mode", "air"),
-        custom_span_mm=float(params["span_mm"]) if params.get("span_mm") else None,
-        custom_chord_mm=float(params["mean_chord_mm"]) if params.get("mean_chord_mm") else None,
-        custom_fin_height_mm=float(params["fin_height_mm"]) if params.get("fin_height_mm") else None,
-        flight_speed_ms=float(params.get("flight_speed_ms", 18.0))
-    )
-    combined = {**opt, **params}
-    mesh_data = get_mesh_data(combined)
-    return JSONResponse(content={"mesh": mesh_data, "aero": opt})
 
 
 @app.post("/api/download_stl")
 async def api_download_stl(params: dict):
-    opt = calculate_optimal_wing(
-        sinker_type=params.get("sinker_type", "bullet"),
-        weight_g=float(params.get("weight_g", 14.0)),
-        diameter_mm=float(params.get("diameter_mm", 10.0)),
-        length_mm=float(params.get("length_mm", 22.0)),
-        angle_of_attack_deg=float(params.get("angle_of_attack_deg", 3.0)),
-        glide_mode=params.get("glide_mode", "air"),
-        custom_span_mm=float(params["span_mm"]) if params.get("span_mm") else None,
-        custom_chord_mm=float(params["mean_chord_mm"]) if params.get("mean_chord_mm") else None,
-        custom_fin_height_mm=float(params["fin_height_mm"]) if params.get("fin_height_mm") else None,
-        flight_speed_ms=float(params.get("flight_speed_ms", 18.0))
-    )
-    combined = {**opt, **params}
-    tris = build_glider_mesh(combined)
-    
-    sinker_t = combined.get("sinker_type", "sinker")
-    weight_str = f"{int(combined.get('weight_g', 14))}g"
-    aoa_str = f"{int(combined.get('angle_of_attack_deg', 3))}deg"
-    filename = f"TobiuoWing_{sinker_t}_{weight_str}_{aoa_str}.stl"
-    
+    aero = calculate_optimal_glider(params)
+    tris = build_full_glider_mesh(aero)
+
+    sinker_t = aero.get("sinker_type", "sinker")
+    weight_str = f"{int(aero.get('weight_g', 14))}g"
+    tail_str = f"Tail{int(aero.get('tail_length_mm', 50))}mm"
+    filename = f"TobiuoWing_{sinker_t}_{weight_str}_{tail_str}.stl"
+
     with tempfile.NamedTemporaryFile(suffix=".stl", delete=False) as tmp:
         tmp_path = tmp.name
-        
+
     export_stl_binary(tris, tmp_path, header_text=f"Tobiuo_{sinker_t}_{weight_str}")
-    
+
     with open(tmp_path, "rb") as f:
         stl_bytes = f.read()
-    
+
     try:
         os.remove(tmp_path)
     except:
         pass
-        
+
     return StreamingResponse(
         io.BytesIO(stl_bytes),
         media_type="application/octet-stream",
@@ -144,19 +111,17 @@ def open_browser_delayed(url: str, delay: float = 1.0):
 
 if __name__ == "__main__":
     import uvicorn
-    
-    # 使用可能なポートを探索 (8080 -> 8081 -> ...)
+
     port = 8080
     while is_port_in_use(port) and port < 8090:
         port += 1
-        
+
     url = f"http://127.0.0.1:{port}"
     print("=" * 65)
     print("  トビウオ天秤＆各種オモリ用 グライダー翼 自動設計システム")
     print(f"  URL: {url}")
     print("=" * 65)
-    
-    # 別スレッドでブラウザを自動オープン
+
     threading.Thread(target=open_browser_delayed, args=(url, 1.2), daemon=True).start()
-    
+
     uvicorn.run(app, host="127.0.0.1", port=port, log_level="info")

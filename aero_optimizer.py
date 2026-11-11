@@ -154,3 +154,5 @@ def calculate_optimal_glider(params: dict) -> dict:
         "estimated_distance_m": round(estimated_distance_m, 1),
         "is_stalled": is_stalled
     }
+
+calculate_optimal_wing = calculate_optimal_glider
